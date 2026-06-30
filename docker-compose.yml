@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chongxin-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chongxin
+      POSTGRES_PASSWORD: change_me
+      POSTGRES_DB: chongxin_store
+    ports:
+      - "5432:5432"
+    volumes:
+      - chongxin_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  chongxin_postgres_data:

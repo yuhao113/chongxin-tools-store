@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  DRAFT
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  LINE_PAY
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING_REVIEW
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum FulfillmentStatus {
+  PENDING
+  PREPARING
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+model Product {
+  id             String        @id @default(cuid())
+  name           String
+  slug           String        @unique
+  sku            String        @unique
+  category       String
+  brand          String        @default("CHONGXIN")
+  shortDesc      String?
+  description    String        @db.Text
+  specs          Json?
+  price          Int
+  compareAtPrice Int?
+  stock          Int           @default(0)
+  imageUrl       String
+  gallery        Json?
+  isFeatured     Boolean       @default(false)
+  status         ProductStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  orderItems     OrderItem[]
+
+  @@index([category])
+  @@index([status])
+  @@index([isFeatured])
+}
+
+model Order {
+  id                   String            @id @default(cuid())
+  orderNo              String            @unique
+  publicToken          String            @unique @default(cuid())
+  customerName         String
+  phone                String
+  email                String?
+  postalCode           String?
+  address              String
+  note                 String?           @db.Text
+  paymentMethod        PaymentMethod
+  paymentStatus        PaymentStatus     @default(UNPAID)
+  orderStatus          OrderStatus       @default(PENDING)
+  fulfillmentStatus    FulfillmentStatus @default(PENDING)
+  subtotal             Int
+  shippingFee          Int
+  total                 Int
+  linePayTransactionId String?           @unique
+  inventoryReleased    Boolean           @default(false)
+  paidAt               DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  items                 OrderItem[]
+
+  @@index([createdAt])
+  @@index([paymentStatus])
+  @@index([fulfillmentStatus])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String?
+  sku       String
+  name      String
+  imageUrl  String
+  price     Int
+  quantity  Int
+  subtotal  Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+}
